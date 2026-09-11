@@ -1,1 +1,2 @@
-SUBSYSTEM=="usb", ATTRS{idVendor}=="2fc6", ATTRS{idProduct}=="f06a", TAG+="uaccess"
+# Moondrop Dawn Pro — allow the active seat / plugdev to talk HID over USB
+SUBSYSTEM=="usb", ATTR{idVendor}=="2fc6", ATTR{idProduct}=="f06a", MODE="0660", GROUP="plugdev", TAG+="uaccess"
