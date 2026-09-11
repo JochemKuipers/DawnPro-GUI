@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=DawnPro GUI
+Comment=Control the Moondrop Dawn Pro AMP/DAC
+Exec=dawnpro-gui
+Icon=audio-card
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;

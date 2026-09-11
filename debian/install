@@ -1,0 +1,6 @@
+main.py usr/share/dawnpro-gui/
+config.json usr/share/dawnpro-gui/
+device usr/share/dawnpro-gui/
+bin/dawnpro-gui usr/bin/
+dawnpro-gui.desktop usr/share/applications/
+udev/99-dawn-pro.rules lib/udev/rules.d/

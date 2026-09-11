@@ -1,0 +1,7 @@
+dawnpro-gui (1.1.1-1) unstable; urgency=medium
+
+  * Debian package of DawnPro-GUI 1.1.1.
+  * Tighten udev rule to Dawn Pro product ID with uaccess.
+  * Refresh device settings with one USB read.
+
+ -- Jochem Kuipers <jochem@kuipers.cc>  Sat, 12 Sep 2026 00:08:22 +0200

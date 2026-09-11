@@ -18,244 +18,67 @@ DawnPro-GUI is a tool used to control the Moondrop Dawn Pro AMP/DAC.
 
 ## Requirements
 
-- Python 3.7 or higher
-- `usb` module
-- `PyGObject`
+- Python 3
+- `pyusb`
+- `PyGObject` / GTK 3
 
 ## Installation
 
-### From AUR (Arch Linux)
-
-The package is available on the Arch User Repository (AUR). You can install it using your preferred AUR helper:
+### From APT (Debian / Ubuntu)
 
 ```sh
-# Using yay
-yay -S dawnpro-gui
-
-# Using paru
-paru -S dawnpro-gui
+curl -fsSL https://jochemkuipers.github.io/apt-repo/jochem.sources \
+  | sudo tee /etc/apt/sources.list.d/jochem.sources
+sudo apt update
+sudo apt install dawnpro-gui
 ```
 
-Or build it manually:
+### Local Debian package
+
 ```sh
-git clone https://aur.archlinux.org/dawnpro-gui.git
-cd dawnpro-gui
-makepkg -si
+sudo apt-get install -y debhelper
+dpkg-buildpackage -us -uc -b
+sudo apt install ../dawnpro-gui_*.deb
 ```
 
-### Manual Installation
-
-To install pyusb, run:
+### Manual
 
 ```sh
-pip install pyusb
+pip install -r requirements.txt
+# PyGObject also needs system GTK: https://pygobject.gnome.org/
+python3 main.py
 ```
 
-To install PyGObject, it may depend on your distro or operating system:
-
-https://pygobject.gnome.org/
-
-## Setup
-
-Add the following rule to your udev rules (you may need to adjust the rule name based on existing rules in `/etc/udev/rules.d/`):
+For manual installs without the package, add a udev rule:
 
 ```sh
-echo 'SUBSYSTEM=="usb", ATTRS{idVendor}=="2fc6", MODE="0666"' | sudo tee /etc/udev/rules.d/99-dawn-pro.rules
-```
-
-Then run:
-
-```sh
+sudo cp udev/99-dawn-pro.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules
 sudo udevadm trigger
 ```
 
 ## Configuration
 
-The application uses a configuration file located at `~/.config/dawnpro/config.json`. If this file doesn't exist, the application will use default settings.
+The application uses `~/.config/dawnpro/config.json`. If missing, built-in defaults apply.
 
-### Setting Up Configuration
-
-1. Create the configuration directory:
 ```sh
 mkdir -p ~/.config/dawnpro
-```
-
-2. Copy the default configuration:
-```sh
 cp config.json ~/.config/dawnpro/config.json
 ```
 
-### Configuration Sections
-
-The configuration file is divided into several sections:
-
-1. `device_constants`: USB communication constants
-   ```json
-   "device_constants": {
-       "BM_REQUEST_TYPE_OUT": 67,
-       "BM_REQUEST_TYPE_IN": 195,
-       "B_REQUEST": 160,
-       "B_REQUEST_GET": 161,
-       "W_VALUE": 0,
-       "W_INDEX": 2464,
-       "VOLUME_REFRESH_DATA": [192, 165, 162],
-       "DATA_LENGTH": 7,
-       "LED_STATUS_ENABLED": 0,
-       "LED_STATUS_TEMP_OFF": 1,
-       "LED_STATUS_OFF": 2
-   }
-   ```
-
-2. `device_identifiers`: Device vendor and product IDs
-   ```json
-   "device_identifiers": {
-       "MOONDROP_VID": 12230,
-       "DAWN_PRO_PID": 61546,
-       "VOLUME_MAX": 0,
-       "VOLUME_MIN": 112
-   }
-   ```
-
-3. `default_settings`: Default values for device settings
-   ```json
-   "default_settings": {
-       "DEFAULT_VOLUME": 50,
-       "DEFAULT_LED_STATUS": "On",
-       "DEFAULT_GAIN": "Low",
-       "DEFAULT_FILTER": "Fast Roll-Off Low Latency"
-   }
-   ```
-
-4. `ui_metrics`: Window size and UI element spacing
-   ```json
-   "ui_metrics": {
-       "WINDOW_WIDTH": 400,
-       "WINDOW_HEIGHT": 300,
-       "MARGIN_TOP": 10,
-       "MARGIN_BOTTOM": 20,
-       "MARGIN_START": 10,
-       "MARGIN_END": 10,
-       "SPACING": 10
-   }
-   ```
-
-5. `logging`: Logging configuration
-   ```json
-   "logging": {
-       "LOG_LEVEL": "INFO",
-       "LOG_FORMAT": "%(asctime)s - %(levelname)s - %(message)s",
-       "LOG_FILE": "~/.config/dawnpro/dawnpro.log"
-   }
-   ```
-
-### Example Custom Configuration
-
-Here's an example of a custom configuration that changes some default values:
-
-```json
-{
-    "default_settings": {
-        "DEFAULT_VOLUME": 75,
-        "DEFAULT_LED_STATUS": "Off",
-        "DEFAULT_GAIN": "High",
-        "DEFAULT_FILTER": "Fast Roll-Off Phase Compensated"
-    },
-    "ui_metrics": {
-        "WINDOW_WIDTH": 500,
-        "WINDOW_HEIGHT": 400,
-        "SPACING": 15
-    },
-    "logging": {
-        "LOG_LEVEL": "DEBUG",
-        "LOG_FILE": "~/.config/dawnpro/debug.log"
-    }
-}
-```
+Sections: `device_constants`, `device_identifiers`, `default_settings`, `ui_metrics`, `logging`.
 
 ## Usage
 
-Ensure the DAC/AMP is plugged in before running the script.
-
-To run the tool, execute the following command:
-
-```sh
-python main.py
-```
+Plug in the DAC/AMP, then run `dawnpro-gui` (or `python3 main.py`).
 
 ## Testing
 
-The project includes a comprehensive test suite with hardware emulation, allowing tests to run without physical hardware.
-
-### Running Tests
-
-Install test dependencies:
-
 ```sh
-pip install -r requirements-test.txt
-```
-
-Run all tests:
-
-```sh
+pip install pytest
 pytest
 ```
 
-Run tests with verbose output:
-
-```sh
-pytest tests/ -v
-```
-
-Run tests with coverage report:
-
-```sh
-pytest --cov=device --cov=tests --cov-report=html
-```
-
-Open the coverage report:
-
-```sh
-xdg-open htmlcov/index.html  # Linux
-open htmlcov/index.html      # macOS
-```
-
-### Test Structure
-
-```
-tests/
-├── conftest.py           # Pytest fixtures and configuration
-├── mock_hardware.py      # Hardware emulation layer
-├── test_device.py        # Device detection tests
-├── test_volume.py        # Volume control tests
-├── test_gain.py          # Gain switching tests
-├── test_filters.py       # Filter selection tests
-├── test_led.py           # LED status tests
-├── test_integration.py   # End-to-end integration tests
-└── test_error_handling.py # Error handling tests
-```
-
-### Build Verification
-
-Run the build verification script to check:
-- Python version compatibility
-- Required dependencies
-- Syntax validation
-- Configuration file validity
-
-```sh
-python scripts/build_check.py
-```
-
-### CI/CD
-
-Tests run automatically on every push and pull request via GitHub Actions. The CI pipeline:
-- Tests on Python 3.7, 3.8, 3.9, 3.10, 3.11
-- Runs linting (black, flake8, pylint)
-- Generates coverage reports
-- Blocks merges on test failures
-
 ## Acknowledgments
-Inspired by:
 
-"mdrop" by frahz: https://github.com/frahz/mdrop/
+Inspired by [mdrop](https://github.com/frahz/mdrop/) by frahz.

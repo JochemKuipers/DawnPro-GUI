@@ -13,7 +13,8 @@ class GetMethods:
             device: The Moondrop device instance.
             constants: Dictionary of constant values used for device communication.
         """
-        self.device = device
+        self.device = dedebian/dawnpro-gui.1
+vice
         self.constants = constants
 
     def get_data(self) -> List[int]:
@@ -77,19 +78,34 @@ class GetMethods:
             logging.error("Failed to get current volume.")
             return None
 
+    def get_settings(self) -> Optional[Dict[str, str]]:
+        """Get LED, gain, and filter from one device read.
+
+        Returns:
+            Dict with led, gain, and filter keys, or None if failed.
+        """
+        data = self.get_data()
+        if not data:
+            return None
+        led_status = utils.convert_led_status_to_string(data[5])
+        gain = utils.convert_gain_to_string(int(data[4]))
+        filter_type = utils.convert_filter_payload_to_string(data[3])
+        self.device.led_status = led_status
+        self.device.current_gain = gain
+        self.device.current_filter = filter_type
+        logging.info(
+            f"Current settings: LED={led_status}, gain={gain}, filter={filter_type}."
+        )
+        return {"led": led_status, "gain": gain, "filter": filter_type}
+
     def get_current_led_status(self) -> Optional[str]:
         """Get the current LED status.
 
         Returns:
             The current LED status as a string, or None if failed.
         """
-        data = self.get_data()
-        if data:
-            led_status = utils.convert_led_status_to_string(data[5])
-            self.device.led_status = led_status
-            logging.info(f"Current LED status: {led_status}.")
-            return led_status
-        return None
+        settings = self.get_settings()
+        return settings["led"] if settings else None
 
     def get_gain(self) -> Optional[str]:
         """Get the current gain setting.
@@ -97,13 +113,8 @@ class GetMethods:
         Returns:
             The current gain setting as a string, or None if failed.
         """
-        data = self.get_data()
-        if data:
-            gain = utils.convert_gain_to_string(int(data[4]))
-            self.device.current_gain = gain
-            logging.info(f"Current gain: {gain}.")
-            return gain
-        return None
+        settings = self.get_settings()
+        return settings["gain"] if settings else None
 
     def get_filter(self) -> Optional[str]:
         """Get the current filter type.
@@ -111,9 +122,5 @@ class GetMethods:
         Returns:
             The current filter type as a string, or None if failed.
         """
-        data = self.get_data()
-        if data:
-            filter_type = utils.convert_filter_payload_to_string(data[3])
-            logging.info(f"Current filter type: {filter_type}.")
-            return filter_type
-        return None
+        settings = self.get_settings()
+        return settings["filter"] if settings else None

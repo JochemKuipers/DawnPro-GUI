@@ -10,18 +10,12 @@ import logging
 
 
 def setup_logging(config: AppConfig) -> None:
-    """Set up logging configuration.
-
-    Args:
-        config: Application configuration instance.
-    """
+    """Set up logging configuration."""
     log_config = config.logging
     handlers = [logging.StreamHandler()]
 
     if log_config.LOG_FILE:
-        # Expand ~ in log file path
         log_file_path = os.path.expanduser(log_config.LOG_FILE)
-        # Create log directory if it doesn't exist
         log_dir = os.path.dirname(log_file_path)
         if log_dir:
             os.makedirs(log_dir, exist_ok=True)
@@ -35,11 +29,7 @@ def setup_logging(config: AppConfig) -> None:
 
 
 def show_error_dialog(message: str) -> None:
-    """Display an error dialog with the given message.
-
-    Args:
-        message: The error message to display.
-    """
+    """Display an error dialog with the given message."""
     dialog = Gtk.MessageDialog(
         parent=None,
         flags=0,
@@ -52,11 +42,7 @@ def show_error_dialog(message: str) -> None:
 
 
 def show_success_dialog(message: str) -> None:
-    """Display a success dialog with the given message.
-
-    Args:
-        message: The success message to display.
-    """
+    """Display a success dialog with the given message."""
     dialog = Gtk.MessageDialog(
         parent=None,
         flags=0,
@@ -69,37 +55,19 @@ def show_success_dialog(message: str) -> None:
 
 
 def load_config() -> AppConfig:
-    """Load application configuration.
-
-    Returns:
-        AppConfig instance with loaded settings.
-    """
+    """Load application configuration."""
     config_path = os.path.expanduser('~/.config/dawnpro/config.json')
     return AppConfig.load_from_file(config_path)
-
-
-# Load configuration
-config = load_config()
-setup_logging(config)
-
-try:
-    moondrop = Moondrop(config)
-except ValueError as err:
-    show_error_dialog(str(err))
-    sys.exit(1)
 
 
 class ModernGUI(Gtk.Window):
     """Main GUI window for the Moondrop Dawn Pro Control application."""
 
-    def __init__(self, config: AppConfig) -> None:
-        """Initialize the GUI window and its components.
-
-        Args:
-            config: Application configuration instance.
-        """
+    def __init__(self, config: AppConfig, moondrop: Moondrop) -> None:
+        """Initialize the GUI window and its components."""
         super().__init__(title="Moondrop Dawn Pro Control")
         self.config = config
+        self.moondrop = moondrop
         self.set_default_size(
             config.ui_metrics.WINDOW_WIDTH,
             config.ui_metrics.WINDOW_HEIGHT
@@ -121,7 +89,6 @@ class ModernGUI(Gtk.Window):
         self.create_filter_selector()
         self.create_button_box()
 
-        # Apply saved settings to device if config file exists, then refresh UI
         config_path = os.path.expanduser('~/.config/dawnpro/config.json')
         if os.path.exists(config_path):
             self.apply_saved_settings()
@@ -146,7 +113,6 @@ class ModernGUI(Gtk.Window):
         self.led_toggle.append_text("On")
         self.led_toggle.append_text("Temporarily Off")
         self.led_toggle.append_text("Off")
-        # Set active based on loaded default
         led_map = {"On": 0, "Temporarily Off": 1, "Off": 2}
         self.led_toggle.set_active(led_map.get(self.config.default_settings.DEFAULT_LED_STATUS, 0))
         self.led_toggle.set_margin_bottom(self.config.ui_metrics.MARGIN_BOTTOM)
@@ -163,7 +129,6 @@ class ModernGUI(Gtk.Window):
         self.gain = Gtk.ComboBoxText()
         self.gain.append_text("Low")
         self.gain.append_text("High")
-        # Set active based on loaded default
         self.gain.set_active(0 if self.config.default_settings.DEFAULT_GAIN == "Low" else 1)
         self.gain.set_margin_bottom(self.config.ui_metrics.MARGIN_BOTTOM)
         self.vbox.pack_start(self.gain, True, True, 0)
@@ -182,7 +147,6 @@ class ModernGUI(Gtk.Window):
         self.filter.append_text("Slow Roll-Off Low Latency")
         self.filter.append_text("Slow Roll-Off Phase Compensated")
         self.filter.append_text("Non-Oversampling")
-        # Set active based on loaded default
         filter_map = {
             "Fast Roll-Off Low Latency": 0,
             "Fast Roll-Off Phase Compensated": 1,
@@ -210,7 +174,7 @@ class ModernGUI(Gtk.Window):
     def on_slider_value_changed(self, slider: Gtk.Scale) -> None:
         """Handle the volume slider value change event."""
         value = int(slider.get_value())
-        if not moondrop.set_volume(value):
+        if not self.moondrop.set_volume(value):
             show_error_dialog(f"Failed to set volume to {value}")
             logging.error(f"Failed to set volume to {value}")
         else:
@@ -220,7 +184,7 @@ class ModernGUI(Gtk.Window):
         """Handle the LED toggle change event."""
         text = combo.get_active_text()
         self.led_toggle_label.set_text(f"LED Toggle: {text}")
-        if not moondrop.set_led_status(text):
+        if not self.moondrop.set_led_status(text):
             show_error_dialog(f"Failed to set LED status to {text}")
             logging.error(f"Failed to set LED status to {text}")
         else:
@@ -230,7 +194,7 @@ class ModernGUI(Gtk.Window):
         """Handle the gain selector change event."""
         text = combo.get_active_text()
         self.gain_label.set_text(f"Gain: {text}")
-        if not moondrop.set_gain(text):
+        if not self.moondrop.set_gain(text):
             show_error_dialog(f"Failed to set gain to {text}")
             logging.error(f"Failed to set gain to {text}")
         else:
@@ -240,7 +204,7 @@ class ModernGUI(Gtk.Window):
         """Handle the filter selector change event."""
         text = combo.get_active_text()
         self.filter_label.set_text(f"Filter: {text}")
-        if not moondrop.set_filter(text):
+        if not self.moondrop.set_filter(text):
             show_error_dialog(f"Failed to set filter to {text}")
             logging.error(f"Failed to set filter to {text}")
         else:
@@ -249,58 +213,42 @@ class ModernGUI(Gtk.Window):
     def apply_saved_settings(self) -> None:
         """Apply saved settings from config to the device."""
         try:
-            # Apply volume
             volume = self.config.default_settings.DEFAULT_VOLUME
             if volume is not None:
-                moondrop.set_volume(volume)
+                self.moondrop.set_volume(volume)
                 logging.info(f"Applied saved volume: {volume}")
-            
-            # Apply LED status
+
             led_status = self.config.default_settings.DEFAULT_LED_STATUS
             if led_status:
-                moondrop.set_led_status(led_status)
+                self.moondrop.set_led_status(led_status)
                 logging.info(f"Applied saved LED status: {led_status}")
-            
-            # Apply gain
+
             gain = self.config.default_settings.DEFAULT_GAIN
             if gain:
-                moondrop.set_gain(gain)
+                self.moondrop.set_gain(gain)
                 logging.info(f"Applied saved gain: {gain}")
-            
-            # Apply filter
+
             filter_type = self.config.default_settings.DEFAULT_FILTER
             if filter_type:
-                moondrop.set_filter(filter_type)
+                self.moondrop.set_filter(filter_type)
                 logging.info(f"Applied saved filter: {filter_type}")
         except Exception as e:
             logging.warning(f"Failed to apply some saved settings: {e}")
 
     def on_refresh_clicked(self, button: Optional[Gtk.Button]) -> None:
         """Handle the refresh button click event."""
-        # Get current device state
-        current_gain = moondrop.get_gain()
-        current_led = moondrop.get_current_led_status()
-        current_volume = moondrop.get_current_volume()
-        current_filter = moondrop.get_filter()
-        
-        # Update labels
-        if current_gain:
-            self.gain_label.set_text(f"Gain: {current_gain}")
-            # Sync combo box: "Low" = 0, "High" = 1
-            self.gain.set_active(0 if current_gain == "Low" else 1)
-        
-        if current_led:
-            self.led_toggle_label.set_text(f"LED Toggle: {current_led}")
-            # Sync combo box: "On" = 0, "Temporarily Off" = 1, "Off" = 2
+        settings = self.moondrop.get_settings()
+        current_volume = self.moondrop.get_current_volume()
+
+        if settings:
+            self.gain_label.set_text(f"Gain: {settings['gain']}")
+            self.gain.set_active(0 if settings['gain'] == "Low" else 1)
+
+            self.led_toggle_label.set_text(f"LED Toggle: {settings['led']}")
             led_map = {"On": 0, "Temporarily Off": 1, "Off": 2}
-            self.led_toggle.set_active(led_map.get(current_led, 0))
-        
-        if current_volume is not None:
-            self.slider.set_value(current_volume)
-        
-        if current_filter:
-            self.filter_label.set_text(f"Filter: {current_filter}")
-            # Sync combo box
+            self.led_toggle.set_active(led_map.get(settings['led'], 0))
+
+            self.filter_label.set_text(f"Filter: {settings['filter']}")
             filter_map = {
                 "Fast Roll-Off Low Latency": 0,
                 "Fast Roll-Off Phase Compensated": 1,
@@ -308,30 +256,29 @@ class ModernGUI(Gtk.Window):
                 "Slow Roll-Off Phase Compensated": 3,
                 "Non-Oversampling": 4
             }
-            self.filter.set_active(filter_map.get(current_filter, 0))
+            self.filter.set_active(filter_map.get(settings['filter'], 0))
+
+        if current_volume is not None:
+            self.slider.set_value(current_volume)
 
     def on_save_clicked(self, button: Gtk.Button) -> None:
         """Handle the save settings button click event."""
         try:
-            # Get current values from UI
             volume = int(self.slider.get_value())
             led_status = self.led_toggle.get_active_text()
             gain = self.gain.get_active_text()
             filter_type = self.filter.get_active_text()
-            
-            # Validate values are not None
+
             if led_status is None or gain is None or filter_type is None:
                 show_error_dialog("Cannot save: Some settings are not selected")
                 logging.error("Attempted to save with None values")
                 return
-            
-            # Update config
+
             self.config.default_settings.DEFAULT_VOLUME = volume
             self.config.default_settings.DEFAULT_LED_STATUS = led_status
             self.config.default_settings.DEFAULT_GAIN = gain
             self.config.default_settings.DEFAULT_FILTER = filter_type
-            
-            # Save to file
+
             config_path = os.path.expanduser('~/.config/dawnpro/config.json')
             self.config.save_to_file(config_path)
 
@@ -343,7 +290,21 @@ class ModernGUI(Gtk.Window):
             logging.error(error_msg)
 
 
-win = ModernGUI(config)
-win.connect("destroy", Gtk.main_quit)
-win.show_all()
-Gtk.main()
+def main() -> None:
+    config = load_config()
+    setup_logging(config)
+
+    try:
+        moondrop = Moondrop(config)
+    except ValueError as err:
+        show_error_dialog(str(err))
+        sys.exit(1)
+
+    win = ModernGUI(config, moondrop)
+    win.connect("destroy", Gtk.main_quit)
+    win.show_all()
+    Gtk.main()
+
+
+if __name__ == "__main__":
+    main()

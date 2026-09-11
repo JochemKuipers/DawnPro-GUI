@@ -90,6 +90,14 @@ class Moondrop:
         """
         return self.getter.get_current_volume()
 
+    def get_settings(self) -> Optional[Dict[str, str]]:
+        """Get LED, gain, and filter from one device read.
+
+        Returns:
+            Dict with led, gain, and filter keys, or None if failed.
+        """
+        return self.getter.get_settings()
+
     def get_current_led_status(self) -> Optional[str]:
         """Get the current LED status.
 
@@ -113,7 +121,6 @@ class Moondrop:
             The current filter setting or None if failed.
         """
         return self.getter.get_filter()
-
     def set_led_status(self, status: str) -> bool:
         """Set the LED status.
 

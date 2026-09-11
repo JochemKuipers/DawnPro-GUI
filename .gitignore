@@ -1,1 +1,13 @@
 __pycache__/
+*.pyc
+debian/.debhelper/
+debian/files
+debian/dawnpro-gui/
+debian/*.substvars
+debian/*.debhelper.log
+../dawnpro-gui_*.deb
+../dawnpro-gui_*.buildinfo
+../dawnpro-gui_*.changes
+*.deb
+*.buildinfo
+*.changes

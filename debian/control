@@ -1,0 +1,23 @@
+Source: dawnpro-gui
+Section: sound
+Priority: optional
+Maintainer: Jochem Kuipers <jochem@kuipers.cc>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Homepage: https://github.com/shaypower/DawnPro-GUI
+Vcs-Browser: https://github.com/JochemKuipers/DawnPro-GUI
+Vcs-Git: https://github.com/JochemKuipers/DawnPro-GUI.git
+Rules-Requires-Root: no
+
+Package: dawnpro-gui
+Architecture: all
+Depends: ${misc:Depends},
+ python3,
+ python3-usb,
+ python3-gi,
+ gir1.2-gtk-3.0
+Description: GUI tool for controlling the Moondrop Dawn Pro AMP/DAC
+ Graphical interface for the Moondrop Dawn Pro USB DAC/AMP. Adjust volume,
+ LED status, gain, and digital filter settings over USB.
+ .
+ Upstream project: https://github.com/shaypower/DawnPro-GUI

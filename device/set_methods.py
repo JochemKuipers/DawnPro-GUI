@@ -71,8 +71,8 @@ class SetMethods:
         Returns:
             True if successful, False otherwise.
         """
-        gain = utils.convert_gain_to_payload(gain)
-        data = [192, 165, 2, gain]
+        payload = utils.convert_gain_to_payload(gain)
+        data = [192, 165, 2, payload]
         try:
             self.device.send_control_transfer(
                 self.constants['BM_REQUEST_TYPE_OUT'],
@@ -98,8 +98,8 @@ class SetMethods:
         Returns:
             True if successful, False otherwise.
         """
-        status = utils.convert_led_status_to_payload(status)
-        data = [192, 165, 6, status]
+        payload = utils.convert_led_status_to_payload(status)
+        data = [192, 165, 6, payload]
         try:
             self.device.send_control_transfer(
                 self.constants['BM_REQUEST_TYPE_OUT'],
@@ -124,8 +124,8 @@ class SetMethods:
         Returns:
             True if successful, False otherwise.
         """
-        filter_type = utils.convert_filter_to_payload(filter_type)
-        data = [192, 165, 1, filter_type]
+        payload = utils.convert_filter_to_payload(filter_type)
+        data = [192, 165, 1, payload]
         try:
             self.device.send_control_transfer(
                 self.constants['BM_REQUEST_TYPE_OUT'],
