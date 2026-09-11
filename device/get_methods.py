@@ -13,8 +13,7 @@ class GetMethods:
             device: The Moondrop device instance.
             constants: Dictionary of constant values used for device communication.
         """
-        self.device = dedebian/dawnpro-gui.1
-vice
+        self.device = device
         self.constants = constants
 
     def get_data(self) -> List[int]:
